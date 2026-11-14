@@ -17,7 +17,6 @@ class AudioService {
     required int surah,
     required int ayah,
   }) async {
-    // Islamic Network URL pattern: {base}/{surah padded?}... actually per-ayah: {base}/{surah}{ayah padded 3}.mp3
     final s = surah.toString().padLeft(3, '0');
     final a = ayah.toString().padLeft(3, '0');
     final url = '$reciterBaseUrl/$s$a.mp3';
