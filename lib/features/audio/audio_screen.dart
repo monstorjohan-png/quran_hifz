@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/constants/surahs.dart';
 import '../../core/providers.dart';
 import '../../data/models/reciter.dart';
+import '../../data/repositories/quran_repository.dart';
 
 class AudioScreen extends ConsumerStatefulWidget {
   const AudioScreen({super.key});
@@ -12,6 +15,7 @@ class AudioScreen extends ConsumerStatefulWidget {
 
 class _AudioScreenState extends ConsumerState<AudioScreen> {
   String _reciterId = 'alafasy';
+  int _surah = 1;
 
   @override
   void initState() {
@@ -23,65 +27,75 @@ class _AudioScreenState extends ConsumerState<AudioScreen> {
   Widget build(BuildContext context) {
     final audio = ref.read(audioServiceProvider);
     final storage = ref.read(storageServiceProvider);
+    final repo = ref.read(quranRepositoryProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('صوت الشيوخ')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: DropdownButtonFormField<String>(
+      appBar: AppBar(
+        title: const Text('صوت الشيوخ'),
+        leading: BackButton(onPressed: () => context.go('/')),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DropdownButtonFormField<String>(
               value: _reciterId,
-              decoration: const InputDecoration(labelText: 'القارئ'),
-              items: Reciter.famous.map((r) => DropdownMenuItem(value: r.id, child: Text('${r.nameAr} (${r.style})'))).toList(),
+              decoration: const InputDecoration(labelText: 'القارئ', border: OutlineInputBorder()),
+              items: Reciter.famous.map((r) => DropdownMenuItem(value: r.id, child: Text('${r.nameAr}'))).toList(),
               onChanged: (v) {
                 if (v == null) return;
                 setState(() => _reciterId = v);
                 storage.reciterId = v;
               },
             ),
-          ),
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('اختر سورة من شاشة القراءة ثم اضغط تشغيل. التحكم بالسرعة:', textAlign: TextAlign.center),
-          ),
-          Slider(
-            value: storage.playbackSpeed,
-            min: 0.5,
-            max: 2.0,
-            divisions: 15,
-            label: storage.playbackSpeed.toStringAsFixed(2),
-            onChanged: (v) {
-              setState(() {});
-              storage.playbackSpeed = v;
-              audio.player.setSpeed(v);
-            },
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(icon: const Icon(Icons.skip_previous), onPressed: () => audio.seek(Duration.zero)),
-              IconButton(icon: const Icon(Icons.play_arrow, size: 40), onPressed: () => audio.resume()),
-              IconButton(icon: const Icon(Icons.pause), onPressed: () => audio.pause()),
-              IconButton(icon: const Icon(Icons.stop), onPressed: () => audio.stop()),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text('قراء عظماء (أصوات ناعمة ومؤثرة):', style: TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(
-            child: ListView(
-              children: Reciter.famous.map((r) => ListTile(
-                    leading: const Icon(Icons.person),
-                    title: Text(r.nameAr),
-                    subtitle: Text(r.nameEn),
-                    trailing: r.id == _reciterId ? const Icon(Icons.check, color: Colors.green) : null,
-                    onTap: () {
-                      setState(() => _reciterId = r.id);
-                      storage.reciterId = r.id;
-                    },
-                  )).toList(),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              value: _surah,
+              decoration: const InputDecoration(labelText: 'السورة', border: OutlineInputBorder()),
+              items: surahs.map((s) => DropdownMenuItem(value: s.number, child: Text('${s.number}. ${s.nameAr}'))).toList(),
+              onChanged: (v) => setState(() => _surah = v ?? 1),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text('السرعة: ${storage.playbackSpeed.toStringAsFixed(2)}'),
+            Slider(
+              value: storage.playbackSpeed,
+              min: 0.5,
+              max: 2.0,
+              divisions: 15,
+              onChanged: (v) {
+                setState(() {});
+                storage.playbackSpeed = v;
+                audio.player.setSpeed(v);
+              },
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('تشغيل السورة'),
+                    onPressed: () => context.go('/reader/$_surah'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView(
+                children: Reciter.famous.map((r) => ListTile(
+                      leading: const Icon(Icons.person),
+                      title: Text(r.nameAr),
+                      subtitle: Text(r.nameEn),
+                      trailing: r.id == _reciterId ? const Icon(Icons.check, color: Colors.green) : null,
+                      onTap: () {
+                        setState(() => _reciterId = r.id);
+                        storage.reciterId = r.id;
+                      },
+                    )).toList(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

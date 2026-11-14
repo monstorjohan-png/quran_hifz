@@ -16,10 +16,15 @@ class MockSttService implements SttService {
   Future<void> init({required String modelPath}) async {}
   @override
   Stream<String> transcribeStream() async* {
-    yield 'بسم الله الرحمن الرحيم';
+    await Future.delayed(const Duration(milliseconds: 500));
+    yield 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
+    await Future.delayed(const Duration(milliseconds: 800));
+    yield 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ ٱلۡحَمۡدُ لِلَّهِ رَبِّ ٱلۡعَٰلَمِينَ';
+    await Future.delayed(const Duration(milliseconds: 800));
+    yield 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ ٱلۡحَمۡدُ لِلَّهِ رَبِّ ٱلۡعَٰلَمِينَ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
   }
   @override
-  Future<String> transcribeFile(String wavPath) async => 'بسم الله الرحمن الرحيم';
+  Future<String> transcribeFile(String wavPath) async => 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
   @override
   Future<void> stop() async {}
   @override
