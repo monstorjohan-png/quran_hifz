@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/surahs.dart';
 import '../../core/providers.dart';
 import '../../data/models/ayah.dart';
+import '../../data/models/reciter.dart';
 import '../../services/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 
