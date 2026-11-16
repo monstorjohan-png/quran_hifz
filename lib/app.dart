@@ -11,6 +11,8 @@ import 'features/audio/audio_screen.dart';
 import 'features/recitation/tasmee_screen.dart';
 import 'features/progress/progress_screen.dart';
 import 'features/settings/settings_screen.dart';
+import 'features/test/test_screen.dart';
+import 'features/achievements/achievements_screen.dart';
 
 final _router = GoRouter(
   initialLocation: '/onboarding',
@@ -28,6 +30,8 @@ final _router = GoRouter(
         GoRoute(path: '/audio', builder: (_, __) => const AudioScreen()),
         GoRoute(path: '/tasmee', builder: (_, __) => const TasmeeScreen()),
         GoRoute(path: '/progress', builder: (_, __) => const ProgressScreen()),
+        GoRoute(path: '/achievements', builder: (_, __) => const AchievementsScreen()),
+        GoRoute(path: '/test', builder: (_, __) => const TestScreen()),
         GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
       ],
     ),
