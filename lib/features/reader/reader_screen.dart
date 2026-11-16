@@ -9,9 +9,9 @@ import '../../data/models/ayah.dart';
 import '../../data/models/reciter.dart';
 import '../../services/audio_service.dart';
 import '../../services/download_service.dart';
+import 'package:just_audio/just_audio.dart';
 
 final _download = DownloadService();
-import 'package:just_audio/just_audio.dart';
 
 class ReaderScreen extends ConsumerStatefulWidget {
   final int surah;
