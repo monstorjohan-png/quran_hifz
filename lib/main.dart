@@ -46,5 +46,10 @@ Future<void> main() async {
     debugPrint('Notification init failed: $e');
   }
 
+  // إشعارات المراجعة اليومية (أوفلاين)
+  final notif = NotificationService();
+  await notif.init();
+  await notif.scheduleDailyReview(hour: 8, minute: 0);
+
   runApp(const ProviderScope(child: QuranHifzApp()));
 }
