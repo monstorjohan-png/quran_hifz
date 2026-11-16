@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,11 @@ Future<void> _setupStorage() async {
 void main() {
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
+    // Mock path_provider للتخزين المؤقت في الاختبارات
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (call) async => 'C:/Windows/Temp/quran_test_docs',
+    );
   });
 
   setUp(() async {
