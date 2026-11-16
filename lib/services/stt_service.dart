@@ -1,4 +1,5 @@
-/// خدمة التعرف على الكلام (STT) بدون نت — Whisper.cpp
+import 'dart:async';
+import 'package:speech_to_text/speech_to_text.dart';
 /// التكامل (Android): استخدم platform channel أو حزمة whisper_ggml.
 /// هذا الملف يعرّف الواجهة + تطبيقاً وهمياً للتطوير.
 abstract class SttService {
@@ -16,17 +17,57 @@ class MockSttService implements SttService {
   Future<void> init({required String modelPath}) async {}
   @override
   Stream<String> transcribeStream() async* {
-    yield 'بسم الله الرحمن الرحيم';
+    await Future.delayed(const Duration(milliseconds: 500));
+    yield 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
+    await Future.delayed(const Duration(milliseconds: 800));
+    yield 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ ٱلۡحَمۡدُ لِلَّهِ رَبِّ ٱلۡعَٰلَمِينَ';
+    await Future.delayed(const Duration(milliseconds: 800));
+    yield 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ ٱلۡحَمۡدُ لِلَّهِ رَبِّ ٱلۡعَٰلَمِينَ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
   }
   @override
-  Future<String> transcribeFile(String wavPath) async => 'بسم الله الرحمن الرحيم';
+  Future<String> transcribeFile(String wavPath) async => 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
   @override
   Future<void> stop() async {}
   @override
   Future<void> dispose() async {}
 }
 
-/// تكامل Whisper.cpp (Android) - ملاحظات:
+/// STT باستخدام Android SpeechRecognizer (on-device إذا كان حزمة اللغة مثبتة)
+class DeviceSttService implements SttService {
+  final SpeechToText _stt = SpeechToText();
+  bool _available = false;
+  final _controller = StreamController<String>.broadcast();
+
+  @override
+  Future<void> init({required String modelPath}) async {
+    _available = await _stt.initialize(
+      onError: (e) => _controller.addError(e),
+    );
+  }
+
+  @override
+  Stream<String> transcribeStream() {
+    if (!_available) return const Stream.empty();
+    _stt.listen(
+      onResult: (r) => _controller.add(r.recognizedWords),
+      localeId: 'ar_SA',
+      partialResults: true,
+    );
+    return _controller.stream;
+  }
+
+  @override
+  Future<String> transcribeFile(String wavPath) async => '';
+
+  @override
+  Future<void> stop() async => _stt.stop();
+
+  @override
+  Future<void> dispose() async {
+    await _stt.cancel();
+    await _controller.close();
+  }
+}
 /// 1. أضف whisper.cpp كـ native lib في android/app/src/main/cpp
 /// 2. نموذج ggml (base/small) في assets/models/ (عربي: ggml-base.bin ~142MB)
 /// 3. استدع عبر MethodChannel('whisper') method 'transcribe' with wav path

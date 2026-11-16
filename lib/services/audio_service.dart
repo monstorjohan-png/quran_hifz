@@ -17,11 +17,16 @@ class AudioService {
     required int surah,
     required int ayah,
   }) async {
-    // Islamic Network URL pattern: {base}/{surah padded?}... actually per-ayah: {base}/{surah}{ayah padded 3}.mp3
     final s = surah.toString().padLeft(3, '0');
     final a = ayah.toString().padLeft(3, '0');
     final url = '$reciterBaseUrl/$s$a.mp3';
     await _player.setUrl(url);
+    await _player.play();
+  }
+
+  /// تشغيل ملف محلي (أوفلاين)
+  Future<void> playFile(String path) async {
+    await _player.setFilePath(path);
     await _player.play();
   }
 
