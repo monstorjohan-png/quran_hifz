@@ -31,6 +31,48 @@ class StorageService {
   double get playbackSpeed => _settings.get('playbackSpeed', defaultValue: 1.0);
   set playbackSpeed(double v) => _settings.put('playbackSpeed', v);
 
+  // --- Streak ---
+  int get streak => _settings.get('streak', defaultValue: 0);
+  set streak(int v) => _settings.put('streak', v);
+  String? get lastStreakDate => _settings.get('lastStreakDate');
+  set lastStreakDate(String? v) => _settings.put('lastStreakDate', v);
+
+  Future<void> bumpStreak() async {
+    final today = DateTime.now();
+    final todayStr = '${today.year}-${today.month}-${today.day}';
+    if (lastStreakDate == todayStr) return;
+    final yesterday = today.subtract(const Duration(days: 1));
+    final yStr = '${yesterday.year}-${yesterday.month}-${yesterday.day}';
+    streak = (lastStreakDate == yStr) ? streak + 1 : 1;
+    lastStreakDate = todayStr;
+  }
+
+  // --- Spaced Repetition (SM-2) ---
+  Map<String, dynamic>? srsRecord(int surah, int ayah) => _progress.get('$surah:$ayah')?['srs'];
+  Future<void> saveSrs(int surah, int ayah, Map<String, dynamic> srs) async {
+    final key = '$surah:$ayah';
+    final cur = Map<String, dynamic>.from(_progress.get(key) ?? {});
+    cur['srs'] = srs;
+    await _progress.put(key, cur);
+  }
+
+  List<Map<String, dynamic>> dueToday() {
+    final now = DateTime.now();
+    final out = <Map<String, dynamic>>[];
+    for (final v in _progress.values) {
+      if (v is Map) {
+        final srs = v['srs'];
+        if (srs is Map) {
+          final due = DateTime.tryParse(srs['dueDate'] ?? '');
+          if (due != null && !due.isAfter(now)) {
+            out.add({'surah': v['surah'], 'ayah': v['ayah']});
+          }
+        }
+      }
+    }
+    return out;
+  }
+
   // --- Tasmee (recitation attempts) ---
   Future<void> saveTasmeeAttempt({
     required int surah,
