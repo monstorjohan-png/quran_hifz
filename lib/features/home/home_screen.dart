@@ -3,71 +3,178 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/surahs.dart';
+import '../../core/providers.dart';
 import '../../core/theme/app_theme.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  String _query = '';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final filtered = surahs
+        .where((s) => s.nameAr.contains(_query) || s.number.toString() == _query)
+        .toList();
+
     return Scaffold(
-      appBar: AppBar(title: const Text('تحفيظ قرآن')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _heroCard(context),
-          const SizedBox(height: 16),
-          const Text('الطرق التفاعلية', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _methodChip(context, 'قراءة وتلاوة', Icons.menu_book, '/reader/1'),
-              _methodChip(context, 'استماع للشيوخ', Icons.headphones, '/audio'),
-              _methodChip(context, 'تسميع صوتي', Icons.mic, '/tasmee'),
-              _methodChip(context, 'كتابة أثناء التسميع', Icons.edit, '/tasmee'),
-              _methodChip(context, 'التقدم', Icons.bar_chart, '/progress'),
-              _methodChip(context, 'الإعدادات', Icons.settings, '/settings'),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const Text('السور', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          ...surahs.map((s) => Card(
-                child: ListTile(
-                  leading: CircleAvatar(backgroundColor: AppTheme.primary, child: Text('${s.number}', style: const TextStyle(color: Colors.white, fontSize: 12))),
-                  title: Text(s.nameAr),
-                  subtitle: Text('${s.nameEn} • ${s.ayahCount} آية'),
-                  trailing: const Icon(Icons.chevron_left),
-                  onTap: () => context.go('/reader/${s.number}'),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 160,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              title: const Text('تحفيظ قرآن', style: TextStyle(fontWeight: FontWeight.bold)),
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(colors: [AppTheme.primary, Color(0xFF2E7D32)]),
                 ),
-              )),
+                child: const Center(
+                  child: Text('بسم الله الرحمن الرحيم',
+                      style: TextStyle(color: Colors.white70, fontSize: 18)),
+                ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'بحث عن سورة...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                ),
+                onChanged: (v) => setState(() => _query = v),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final storage = ref.read(storageServiceProvider);
+                  final plan = storage.dailyPlan;
+                  final done = storage.todayMemorized;
+                  final ratio = plan == 0 ? 0.0 : (done / plan).clamp(0.0, 1.0);
+                  return Card(
+                    color: Colors.teal.shade50,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => context.go('/settings'),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.school, color: Colors.teal),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('خطة اليوم: $done / $plan آيات', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 4),
+                                  LinearProgressIndicator(value: ratio, backgroundColor: Colors.teal.shade100),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _actionCard(context, 'قراءة', Icons.menu_book, Colors.green, () => context.go('/reader/1')),
+                  _actionCard(context, 'صوت', Icons.headphones, Colors.blue, () => context.go('/audio')),
+                  _actionCard(context, 'تسميع', Icons.mic, Colors.orange, () => context.go('/tasmee')),
+                  _actionCard(context, 'تقدم', Icons.bar_chart, Colors.purple, () => context.go('/progress')),
+                  _actionCard(context, 'اختبار', Icons.quiz, Colors.indigo, () => context.go('/test')),
+                  _actionCard(context, 'إنجازات', Icons.emoji_events, Colors.amber, () => context.go('/achievements')),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(12),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 2.6,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (_, i) {
+                  final s = filtered[i];
+                  return Card(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => context.go('/reader/${s.number}'),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundColor: AppTheme.primary,
+                              child: Text('${s.number}', style: const TextStyle(color: Colors.white, fontSize: 11)),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(s.nameAr, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                childCount: filtered.length,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _heroCard(BuildContext context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [AppTheme.primary, Color(0xFF2E7D32)]),
-          borderRadius: BorderRadius.circular(16),
+  Widget _actionCard(BuildContext context, String label, IconData icon, Color color, VoidCallback onTap) {
+    return SizedBox(
+      width: (MediaQuery.of(context).size.width - 40) / 2,
+      child: Card(
+        color: color.withOpacity(0.1),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Icon(icon, color: color),
+                const SizedBox(width: 8),
+                Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
         ),
-        child: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('بسم الله الرحمن الرحيم', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Text('احفظ كتاب الله بطرق تفاعلية، صوت شيوخ، تسميع صوتي وكتابة — يعمل بدون نت.',
-                style: TextStyle(color: Colors.white70)),
-          ],
-        ),
-      );
-
-  Widget _methodChip(BuildContext context, String label, IconData icon, String route) => ActionChip(
-        avatar: Icon(icon, size: 18),
-        label: Text(label),
-        onPressed: () => context.go(route),
-      );
+      ),
+    );
+  }
 }

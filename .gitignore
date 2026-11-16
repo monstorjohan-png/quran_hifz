@@ -37,3 +37,4 @@ assets/models/*.gguf
 # OS
 .DS_Store
 Thumbs.db
+android/.kotlin/

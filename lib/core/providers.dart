@@ -16,4 +16,4 @@ final storageServiceProvider = Provider<StorageService>((ref) => StorageService(
 
 final quranRepositoryProvider = Provider<QuranRepository>((ref) => QuranRepository());
 
-final sttServiceProvider = Provider<SttService>((ref) => MockSttService());
+final sttServiceProvider = Provider<SttService>((ref) => DeviceSttService());
