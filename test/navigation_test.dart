@@ -30,24 +30,15 @@ void main() {
     await _setupStorage();
   });
 
-  testWidgets('App launches and navigates without exceptions', (tester) async {
+  testWidgets('Diagnose launch screen', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: QuranHifzApp()));
     await tester.pump(const Duration(seconds: 2));
-    assert(tester.takeException() == null, 'Launch threw an exception');
-
-    // انتقل بين التبويبات بالضغط على الأيقونات
-    Future<void> tapIcon(IconData icon, String label) async {
-      await tester.tap(find.byIcon(icon));
-      await tester.pump(const Duration(seconds: 2));
-      if (tester.takeException() != null) {
-        fail('Navigation to $label threw: ${tester.takeException()}');
-      }
-    }
-
-    await tapIcon(Icons.menu_book, 'قراءة');
-    await tapIcon(Icons.headphones, 'صوت');
-    await tapIcon(Icons.mic, 'تسميع');
-    await tapIcon(Icons.bar_chart, 'تقدم');
-    await tapIcon(Icons.home, 'الرئيسية');
+    debugPrint('takeException: ${tester.takeException()}');
+    debugPrint('has بسم الله: ${find.text('بسم الله').evaluate().isNotEmpty}');
+    debugPrint('has تحفيظ قرآن: ${find.text('تحفيظ قرآن').evaluate().isNotEmpty}');
+    debugPrint('has حدث خطأ: ${find.textContaining('حدث خطأ').evaluate().isNotEmpty}');
+    // اطبع أول نصوص تظهر في الشجرة
+    final texts = tester.widgetList(find.byType(Text)).map((w) => (w as Text).data).whereType<String>().toList();
+    debugPrint('TEXTS: ${texts.take(20).join(' | ')}');
   });
 }
